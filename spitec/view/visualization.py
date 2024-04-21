@@ -1,35 +1,17 @@
 from dash import html, dcc
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
-from enum import Enum
 from .languages import languages
 from datetime import datetime, date, timedelta
 from ..processing import DataProducts
+from ..callbacks.callbacks import register_callbacks
+from .enum_classes import ProjectionType
 
 
 language = languages["en"]
 
 
-class ProjectionType(Enum):
-    MERCATOR = "mercator"
-    ROBINSON = "robinson"
-    ORTHOGRAPHIC = "orthographic"
-
-
-class PointColor(Enum):
-    SILVER = "silver"
-    RED = "red"
-    GREEN = "green"
-
-
-def create_layout(
-    site_map: go.Figure,
-    site_data: go.Figure,
-    projection_radio: dbc.RadioItems,
-    time_slider: dcc.RangeSlider,
-    checkbox_site: dbc.Checkbox,
-    selection_data_types: dbc.Select,
-) -> html.Div:
+def create_layout(site_map, site_data, time_slider, selection_data_types, projection_radio, checkbox_site) -> html.Div:
     left_side = _create_left_side(site_map, projection_radio, checkbox_site)
     data_tab = _create_data_tab(site_data, time_slider, selection_data_types)
     tab_lat_lon = _create_selection_tab_lat_lon()
@@ -39,6 +21,7 @@ def create_layout(
     size_data = 7
     layout = html.Div(
         [
+            
             dcc.Store(id="site-names-store", storage_type="session"),
             dcc.Store(id="local-file-store", storage_type="session"),
             dbc.Row(
@@ -102,8 +85,8 @@ def create_layout(
 
 def _create_left_side(
     site_map: go.Figure,
-    projection_radio: dbc.RadioItems,
-    checkbox_site: dbc.Checkbox,
+    projection_radio,
+    checkbox_site
 ) -> list[dbc.Row]:
     download_window = _create_download_window()
     open_window = _create_open_window()
@@ -142,7 +125,10 @@ def _create_left_side(
             ),
         ),
         dbc.Row(
-            dcc.Graph(id="graph-site-map", figure=site_map),
+            [
+                dcc.Graph(id="graph-site-map", figure=site_map),
+                #dcc.Store(id="projection-type-store", storage_type="session"),
+            ]
         ),
         dbc.Row(
             html.Div(projection_radio),
@@ -318,13 +304,14 @@ def create_projection_radio() -> dbc.RadioItems:
         id="projection-radio",
         inline=True,
         value=ProjectionType.MERCATOR.value,
+        #persistence=True, persistence_type="session"
     )
     return radio_items
 
 
 def create_checkbox_site() -> dbc.Checkbox:
     checkbox = dbc.Checkbox(
-        id="hide-show-site", label=language["hide-show-site"], value=True
+        id="hide-show-site", label=language["hide-show-site"], value=True#, persistence=True, persistence_type="session"
     )
     return checkbox
 

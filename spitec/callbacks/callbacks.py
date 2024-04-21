@@ -1,6 +1,7 @@
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
-from ..view import PointColor, ProjectionType, languages
+from ..view.enum_classes import PointColor, ProjectionType
+from ..view.languages import languages
 from ..processing import *
 from datetime import datetime, timezone
 import dash
@@ -9,6 +10,7 @@ import dash_bootstrap_components as dbc
 from pathlib import Path
 from numpy.typing import NDArray
 import numpy as np
+from app import app
 
 
 language = languages["en"]
@@ -18,21 +20,19 @@ SHIFT = -0.5
 
 
 def register_callbacks(
-    app: dash.Dash,
     site_map: go.Figure,
     site_data: go.Figure,
-    projection_radio: dbc.RadioItems,
     time_slider: dcc.RangeSlider,
-    checkbox_site: dbc.Checkbox,
     selection_data_types: dbc.Select,
+    projection_radio,
+    checkbox_site
 ) -> None:
-
     @app.callback(
         Output("graph-site-map", "figure", allow_duplicate=True),
         [Input("projection-radio", "value")],
         prevent_initial_call=True,
     )
-    def update_map_projection(projection_value: ProjectionType) -> go.Figure:
+    def update_map_projection(projection_value: ProjectionType) -> list[go.Figure | ProjectionType]:
         if projection_value != site_map.layout.geo.projection.type:
             site_map.update_layout(geo=dict(projection_type=projection_value))
         projection_radio.value = projection_value
