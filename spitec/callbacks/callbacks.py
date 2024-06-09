@@ -8,9 +8,13 @@ from pathlib import Path
 from numpy.typing import NDArray
 import time
 
+import requests
+
 
 language = languages["en"]
 FILE_FOLDER = Path("data")
+
+BASE_URL = "http://127.0.0.1:8000"
 
 
 def register_callbacks(app: dash.Dash) -> None:
@@ -421,27 +425,29 @@ def register_callbacks(app: dash.Dash) -> None:
         ],
         [Input("download-file", "n_clicks")],
         [State("date-selection", "date")],
-        background=True,
-        running=[
-            (Output("boot-progress-window", "is_open"), True, True),
-            (Output("boot-progress-window", "backdrop"), "static", True),
-            (Output("download-window", "is_open"), False, False),
-            (
-                Output("loading-process-modal-header", "close_button"),
-                False,
-                True,
-            ),
-            (Output("cancel-download", "disabled"), False, True),
-        ],
-        cancel=Input("cancel-download", "n_clicks"),
-        progress=[
-            Output("boot-process", "value"),
-            Output("load-per", "children"),
-        ],
+        # background=True,
+        # running=[
+        #     (Output("boot-progress-window", "is_open"), True, True),
+        #     (Output("boot-progress-window", "backdrop"), "static", True),
+        #     (Output("download-window", "is_open"), False, False),
+        #     (
+        #         Output("loading-process-modal-header", "close_button"),
+        #         False,
+        #         True,
+        #     ),
+        #     (Output("cancel-download", "disabled"), False, True),
+        # ],
+        # cancel=Input("cancel-download", "n_clicks"),
+        # progress=[
+        #     Output("boot-process", "value"),
+        #     Output("load-per", "children"),
+        # ],
         prevent_initial_call=True,
     )
     def download_file(
-        set_progress, n1: int, date: str
+        # set_progress, 
+        n1: int, 
+        date: str
     ) -> list[dict[str, str] | str]:
         text = language["download_window"]["successаfuly"]
         color = "green"
@@ -455,12 +461,17 @@ def register_callbacks(app: dash.Dash) -> None:
                 text = language["download_window"]["repeat-action"]
             else:
                 local_file.touch()
-                try:
-                    for done in load_data(date, local_file):
-                        set_progress((done, f"{done}%"))
-                except requests.exceptions.HTTPError as err:
-                    text = language["download_window"]["error"]
-                    local_file.unlink()
+                response = requests.post(f"{BASE_URL}/download/", json={"filename": date, "local_file": f"{local_file}"})
+                if response.status_code == 200:
+                    task_id = response.json().get("task_id")
+                else:
+                    task_id = "Failed to start download"
+                # try:
+                #     for done in load_data(date, local_file):
+                #         set_progress((done, f"{done}%"))
+                # except requests.exceptions.HTTPError as err:
+                #     text = language["download_window"]["error"]
+                #     local_file.unlink()
         if text != language["download_window"]["successаfuly"]:
             color = "red"
         style = {
@@ -468,7 +479,33 @@ def register_callbacks(app: dash.Dash) -> None:
             "margin-top": "10px",
             "color": color,
         }
-        return style, text
+        return style, task_id
+    
+    @app.callback(
+        [
+            Output("status-id-task", "children"),
+            Output("status-id-task", "style"),
+        ],
+        [Input("check-id-task", "n_clicks")],
+        [State("id-task", "value")],
+        prevent_initial_call=True,
+    )
+    def check_status_task(n: int, id_task: int) -> list[dict[str, str] | str]:
+        if id_task == 0:
+            return "", {"visibility": "hidden"}
+        response = requests.get(f"{BASE_URL}/task_status/{id_task}")
+        if response.status_code == 200:
+            status = response.json()
+            text=f"{status}"
+        else:
+            text = response.status_code
+        style = {
+            "margin-top": "20px",
+            "text-align": "center",
+            "fontSize": "18px",
+            "color": "blue",
+        }
+        return text, style
     
     @app.callback(
         Output("downloading-file-store", "data"),

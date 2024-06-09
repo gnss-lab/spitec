@@ -114,6 +114,18 @@ def _create_left_side() -> list[dbc.Row]:
                             open_window,
                             style={"margin-left": "15px"},
                         ),
+                        dbc.Input(
+                            id="id-task",
+                            type="number",
+                            persistence=True,
+                            persistence_type="session",
+                            style={"width": "70px", "margin-left": "20px"},
+                        ),
+                        dbc.Button(
+                            "Check id task",
+                            id="check-id-task",
+                            style={"margin-left": "5px"},
+                        ),
                     ],
                     style={"display": "flex", "justify-content": "flex-start"},
                 ),
@@ -141,6 +153,16 @@ def _create_left_side() -> list[dbc.Row]:
                 "text-align": "center",
                 "fontSize": "18px",
             },
+        ),
+        dbc.Row(
+            html.Div(
+                "",
+                id="status-id-task",
+                style={
+                    "visibility": "hidden",
+                },
+            ),
+
         ),
     ]
     return left_side
@@ -198,6 +220,13 @@ def _create_download_window() -> html.Div:
                                     "margin-top": "20px",
                                 },
                             ),
+                            html.Div(
+                                "",
+                                id="downloaded",
+                                style={
+                                    "visibility": "hidden",
+                                },
+                            ),
                         ]
                     ),
                 ],
@@ -225,7 +254,7 @@ def _create_boot_progress_window() -> dbc.Modal:
                             dbc.Progress(id="boot-process", value=0),
                             html.Div(
                                 "",
-                                id="downloaded",
+                                id="downloaded1",
                                 style={
                                     "visibility": "hidden",
                                 },

@@ -18,4 +18,5 @@ app.layout = create_layout()
 register_callbacks(app)
 
 if __name__ == "__main__":
-    app.run_server()
+    """poetry run python main.py"""
+    app.run_server(debug=True)
